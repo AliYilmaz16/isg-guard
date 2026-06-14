@@ -1,126 +1,83 @@
-# İş Sağlığı ve Güvenliği İçin Mobil Risk Algılama
+# İş Güvenliği İçin Mobil Risk Algılama Sistemi 
 
-Saha çalışanlarının akıllı telefonlarından sensör verisi toplayan, risk analizi yapan ve web panelinde canlı izleme sağlayan platform.
+Bu proje, saha çalışanlarının güvenliğini en üst düzeye çıkarmak için geliştirilmiş entegre bir **IoT / Mobil Güvenlik Çözümüdür**. Cep telefonlarının ivmeölçer, GPS ve mikrofon gibi donanımlarını kullanarak işçilerin durumunu anlık olarak izler ve olası tehlikelerde (düşme, sert darbe, tehlikeli bölgeye giriş, yüksek gürültü) yönetim paneline anlık alarmlar iletir.
 
-## Mimari
+![Sistem Görünümü 1](images/web-1.png)
 
-- **Mobil:** Flutter (ivmeölçer, GPS, mikrofon, ağ durumu)
-- **Backend:** Node.js + Express + Socket.io
-- **Veritabanı:** PostgreSQL + Prisma
-- **Web Panel:** React + Vite + Recharts + Leaflet
+---
 
-## Gereksinimler
+##  Öne Çıkan Özellikler
 
-- Node.js 18+
-- Docker & Docker Compose
-- Flutter SDK 3.x (mobil için)
+- **Gerçek Zamanlı Konum Takibi:** Çalışanlar harita üzerinden WebSockets (Socket.io) sayesinde anlık (gecikmesiz) olarak izlenir.
+- **Düşme/Darbe Tespiti:** Z-Score ve eşik değer (threshold) algoritmalarıyla ivmeölçer verileri analiz edilir; olağandışı ivmelenmeler anında algılanır.
+- **Tehlikeli Bölge (Geofencing) Kontrolü:** Çalışanlar yasaklı veya tehlikeli (radyasyon, yüksek gerilim vs.) bir alana girdiğinde sistem alarm verir.
+- **İşçi Hareketsizlik Uyarısı:** Belirlenen süreden daha uzun süre hareketsiz kalan cihazlar tespit edilir.
+- **Çok Platformlu Çözüm:** 
+  - İzleme ve raporlama için modern **React / Web Paneli**.
+  - Veri toplama için arka planda kesintisiz çalışan mobil uygulama.
+- **Anlık Bildirimler:** Yüksek riskli durumlarda yöneticilere **Telegram** üzerinden acil durum mesajları otomatik gönderilir.
 
-## Kurulum
+---
 
-### 1. Veritabanı
+##  Ekran Görüntüleri
 
-**Postgres.app (önerilen — Docker gerekmez):**
+Projenin farklı modüllerine ait ekran görüntüleri aşağıda listelenmiştir.
 
-1. [Postgres.app](https://postgresapp.com/) uygulamasını açın (menü çubuğunda fil ikonu görünmeli)
-2. Veritabanını oluşturun:
-```bash
-/Applications/Postgres.app/Contents/Versions/latest/bin/psql -d postgres -c "CREATE DATABASE isg_risk_db;"
-```
-3. `.env` dosyasında `DATABASE_URL` kullanıcı adınızı içermeli:
-```
-DATABASE_URL="postgresql://KULLANICI_ADINIZ@localhost:5432/isg_risk_db?schema=public"
-```
+###  Yönetici Web Paneli
+Yöneticiler saha çalışanlarının anlık konumlarını, tehlikeli bölgeleri (kırmızı çemberler) ve sistemden gelen canlı uyarıları bu ekranda görürler.
 
-**Alternatif — Docker:**
-```bash
-docker compose up -d
-```
+![Web Paneli Görüntüsü 1](images/web-2.png)
 
-### 2. Backend
+Cihazlara dair detaylı analizlerin ve acil durum uyarılarının bulunduğu menüler:
 
+![Web Paneli Detay 1](images/web-4.png)
+
+Yöneticiyle ilgili arayüzler
+
+![Web Paneli Detay 2](images/web-5.png)
+![Web Paneli Görüntüsü 2](images/web-3.png)
+
+###  Mobil Uygulama (Veri Toplama Modülü)
+Saha çalışanının arka planda konum, ivme ve gürültü verilerini sürekli okuyup sunucuya aktardığı arayüz.
+
+<p align="center">
+  <img src="images/mobile-1.png" width="300" />
+  <img src="images/mobile-2.png" width="300" />
+</p>
+
+---
+
+##  Kullanılan Teknolojiler (Sistem Mimarisi)
+
+1. **Backend / Sunucu:** Node.js, Express.js, Socket.io
+2. **Veritabanı ve ORM:** PostgreSQL, Prisma ORM
+3. **Web Arayüzü (Yönetici Paneli):** React, Vite, TailwindCSS, React-Leaflet, Recharts
+4. **Mobil Veri Toplayıcılar:** .NET (MAUI) & Flutter (Dart)
+5. **Dış Servis Entegrasyonları:** Telegram Bot API (Acil Bildirimler)
+
+---
+
+##  Kurulum ve Çalıştırma
+
+### 1. Backend (Sunucu)
 ```bash
 cd backend
 npm install
-npm run db:setup
+# .env dosyanızı ayarlayın (DATABASE_URL, JWT_SECRET, TELEGRAM_BOT_TOKEN vb.)
+npx prisma db push
 npm run dev
 ```
 
-Backend: http://localhost:3000
-
-### 3. Web Panel
-
+### 2. Web Paneli (Yönetici Ekranı)
 ```bash
 cd web
 npm install
 npm run dev
 ```
 
-Web panel: http://localhost:5173
-
-### 4. Mobil Uygulama
-
+### 3. Mobil Uygulama (.NET)
 ```bash
-cd mobile
-flutter pub get
-flutter run
-```
-
-> Sunucu adresini uygulama içinden **Ayarlar** ekranından değiştirebilirsiniz. Android'de izleme başlatıldığında bildirim çubuğunda "ISG Risk — İzleniyor" görünür ve arka planda veri gönderimi devam eder.
-
-### Telegram Bildirimleri (opsiyonel)
-
-Kritik/yüksek alarmlar için Telegram Bot kurulumu:
-
-1. [@BotFather](https://t.me/BotFather) ile bot oluşturun, token alın
-2. Botu admin grubunuza ekleyin
-3. `https://api.telegram.org/bot<TOKEN>/getUpdates` ile `chat_id` öğrenin
-4. `.env` dosyasına ekleyin:
-```
-TELEGRAM_ENABLED=true
-TELEGRAM_BOT_TOKEN=your_bot_token
-TELEGRAM_CHAT_ID=your_chat_id
-```
-
-## Demo Hesapları
-
-| Rol | E-posta | Şifre |
-|-----|---------|-------|
-| Admin | admin@isg.com | admin123 |
-| Çalışan | calisan@isg.com | employee123 |
-
-## API Özeti
-
-| Method | Endpoint | Açıklama |
-|--------|----------|----------|
-| POST | /api/auth/login | Giriş |
-| PATCH | /api/auth/change-password | Şifre değiştir |
-| POST | /api/auth/register | Kullanıcı oluştur (admin) |
-| GET | /api/devices/locations | Cihaz konumları (harita) |
-| POST | /api/devices/register | Cihaz kaydet |
-| POST | /api/sensor-data | Sensör verisi gönder |
-| GET | /api/sensor-data | Geçmiş sensör verisi |
-| GET | /api/alarms | Alarm listesi |
-| PATCH | /api/alarms/:id/resolve | Alarmı çöz |
-| CRUD | /api/danger-zones | Tehlikeli bölge yönetimi |
-
-Detaylı API dokümantasyonu: [docs/API.md](docs/API.md)
-
-## Demo Senaryosu
-
-1. Admin olarak web panele giriş yapın
-2. Tehlikeli bölgeleri kontrol edin / yeni bölge ekleyin
-3. Çalışan olarak mobil uygulamaya giriş yapın, izlemeyi başlatın
-4. Telefonu sertçe sallayın → `hard_impact` alarmı
-5. Tehlikeli bölgeye yaklaşın → `danger_zone_entry` alarmı
-6. Web panelde canlı alarm ve grafikleri izleyin
-
-## Proje Yapısı
-
-```
-proje/
-├── backend/     # Node.js API + analiz + Socket.io
-├── web/         # React dashboard
-├── mobile/      # Flutter sensör uygulaması
-├── docs/        # Teknik dokümantasyon
-└── docker-compose.yml
+cd HealthSafety
+dotnet build
+dotnet run
 ```
